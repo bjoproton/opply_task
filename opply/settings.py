@@ -94,7 +94,10 @@ DATABASES = {
         'NAME': 'opply',
         'USER': 'opply',
         'PASSWORD': env('POSTGRES_PASSWORD'),
-        'HOST': 'localhost',
+        'HOST': 'database',  # This is the host name of the docker db container
+        # as referenced inside of the backend container
+        # 'HOST': 'localhost', # Use this host if you're running a containerised
+        # db with a local running django, e.g. for testing
         'PORT': 5432,
     }
 }
