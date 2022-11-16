@@ -3,3 +3,5 @@ psycopg2
 djangorestframework
 django-rest-authtoken
 django-environ
+pytest
+pytest-django
