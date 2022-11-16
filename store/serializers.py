@@ -1,11 +1,20 @@
 from rest_framework import serializers
-from .models import Product, Order
+from exceptions import ProductOutOfStockException
+from .models import Product, Order, OrderProducts
 
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'quantity_in_stock']
+
+
+class ProductsIdField(serializers.RelatedField):
+    def to_representation(self, value):
+        return value.product_id
+
+    def to_internal_value(self, data):
+        return Product.objects.get(id=data)
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -38,8 +47,7 @@ class OrderSerializer(serializers.ModelSerializer):
              GUIDs, SKUs etc.
     """
 
-    products = serializers.PrimaryKeyRelatedField(many=True,
-                                                  queryset=Product.objects.all())
+    products = ProductsIdField(many=True, queryset=Product.objects.all())
 
     class Meta:
         model = Order
@@ -50,6 +58,9 @@ class OrderSerializer(serializers.ModelSerializer):
         products_data = validated_data.pop('products')
         order = Order.objects.create(
             user=self.context['user'], **validated_data)
+
         for product in products_data:
-            order.products.add(product)
+            if product.quantity_in_stock < 1:
+                raise ProductOutOfStockException
+            OrderProducts(order=order, product=product).save()
         return order
