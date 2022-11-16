@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  test-db:
+    container_name: test-db
+    image: postgres:latest
+    volumes:
+      - type: volume
+        source: test-db-data
+        target: /var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=opply
+      - POSTGRES_USER=opply
+      # Password comes from a non version controlled .env file
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+volumes:
+  test-db-data:
