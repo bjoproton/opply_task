@@ -35,24 +35,4 @@ class Order(models.Model):
                              on_delete=models.PROTECT, related_name='orders')
     datetime = models.DateTimeField(null=False, blank=False,
                                     default=timezone.now)
-
-
-class OrderProducts(models.Model):
-    """ Model to hold the product information linked to an
-        order.
-
-        Note: We are protecting the order deletion here, so that
-              an order can't be removed without explicitly deciding
-              what do do with their linked product order records.
-
-        Note: We are protecting the product deletion here, so that
-              a product can't be removed without explicitly deciding
-              what do do with their linked product order records.
-    """
-
-    order = models.ForeignKey('Order', null=False, blank=False,
-                              on_delete=models.PROTECT,
-                              related_name='+')
-    product = models.ForeignKey('Product', null=False, blank=False,
-                                on_delete=models.PROTECT,
-                                related_name='+')
+    products = models.ManyToManyField('Product', null=False, blank=False)
