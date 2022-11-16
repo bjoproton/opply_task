@@ -47,7 +47,6 @@ class TestProductView:
         request_client.credentials(HTTP_AUTHORIZATION='Token ' + token)
         r = request_client.get(self.api_path,
                                content_type='application/json')
-        print (token)
         assert r.status_code == status.HTTP_200_OK
 
     def test_no_auth(self, request_client):
@@ -59,6 +58,7 @@ class TestProductView:
         supply auth credentials, as it's tested. We can now
         use force_authenicate on the user object.
     """
+
     def test_basic_response(self, request_client, user, products):
         request_client.logout()
         request_client.force_authenticate(user)
