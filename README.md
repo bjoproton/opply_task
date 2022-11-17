@@ -4,7 +4,7 @@
 
 I have provided a django instance intended to be used with postgres. 
 
-The first step is to create a .env file to hold the value:
+The first step is to ***create an .env file*** to hold the value of the postgres password:
 
 ```bash
 POSTGRES_PASSWORD=ASuperSecurePassword
@@ -25,7 +25,21 @@ Alternatively, if you prefer a local install of python/django, there is an optio
 docker compose -f docker-compose-pg.yaml up
 ```
 
-Which will create a container called test-db and expose forward localhost:5432. If you choose this approach, you'll have to modify your django settings file, but I've left commentary near the DATABASES dictionary.
+Which will create a container called test-db and forward localhost:5432. If you choose this approach, you'll have to modify your django settings file, but I've left commentary near the DATABASES dictionary.
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'opply',
+        'USER': 'opply',
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': 'database',  # This is the host name of the docker db container as referenced inside of the backend container
+        # 'HOST': 'localhost', # Use this host if you're running a containerised db with a local running django, e.g. for testing
+        'PORT': 5432,
+    }
+}
+```
 
 There are some tests available that can be run with the following commands, depending on whether you're running locally or in containerised mode.
 
@@ -37,6 +51,84 @@ docker exec -it backend bash -c "pytest"
 Local:
 ```bash
 pytest
+```
+
+## API Instructions
+
+### Login
+
+A login endpoint is available (of course you'll need to create a user first):
+
+```bash
+curl -X POST http://127.0.0.1:8000/auth/login/ -H "Content-type: application/json" -d '{"username": "john", "password": "Password1!"}'
+{"token":"gm2N7HBGBPATx15LbrY12SPaKv3TyhDuuL55WhJ3ZSQJaR69ZI1OefMiKXqlezL4"}
+```
+
+### Products
+
+Using the token from the login response
+
+```bash
+curl -X GET http://127.0.0.1:8000/store/products -H "Content-type: application/json" -H "Authorization: Token gm2N7HBGBPATx15LbrY12SPaKv3TyhDuuL55WhJ3ZSQJaR69ZI1OefMiKXqlezL4"
+{
+  "count": 3,
+  "next": "http://127.0.0.1:8000/store/products?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "name": "Toothbrush",
+      "price": "11.05",
+      "quantity_in_stock": 33
+    },
+    {
+      "id": 2,
+      "name": "Hairbrush",
+      "price": "1.10",
+      "quantity_in_stock": 3
+    }
+  ]
+}
+```
+
+### Orders
+
+A customer can place an order using:
+```bash
+curl -X POST http://127.0.0.1:8000/store/orders -H "Content-type: application/json" -H "Authorization: Token gm2N7HBGBPATx15LbrY12SPaKv3TyhDuuL55WhJ3ZSQJaR69ZI1OefMiKXqlezL4" -d '{"products": [1, 2, 3]}'
+```
+
+where the products list is a list of product ids, obtained from the products endpoint.
+
+The history of orders can be obtained from:
+```bash
+curl -X GET http://127.0.0.1:8000/store/orders -H "Content-type: application/json" -H "Authorization: Token gm2N7HBGBPATx15LbrY12SPaKv3TyhDuuL55WhJ3ZSQJaR69ZI1OefMiKXqlezL4"
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "user": 1,
+      "datetime": "2022-11-17T01:20:45.842692Z",
+      "products": [
+        1,
+        2,
+        3
+      ]
+    }
+  ]
+}
+
+```
+
+### Logout
+
+A logout endpoint is available
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/auth/logout/ -H "Content-type: application/json" -H "Authorization: Token gm2N7HBGBPATx15LbrY12SPaKv3TyhDuuL55WhJ3ZSQJaR69ZI1OefMiKXqlezL4"
 ```
 
 ## Time limitations
